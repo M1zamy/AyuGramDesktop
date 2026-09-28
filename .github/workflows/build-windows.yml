@@ -90,12 +90,12 @@ jobs:
       - name: Configure CMake
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
-          call configure.bat x64 qt6 ^
-            -D TDESKTOP_API_ID=2040 ^
-            -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
-            -D CMAKE_CONFIGURATION_TYPES=Release ^
-            -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
-            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
+          call configure.bat -G "Ninja Multi-Config" qt6 ^
+            -DTDESKTOP_API_ID=2040 ^
+            -DTDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
+            -DCMAKE_CONFIGURATION_TYPES=Release ^
+            -DDESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
+            -DDESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
 
       - name: Build AyuGram
         run: |
@@ -103,9 +103,20 @@ jobs:
 
       - name: Package Artifacts
         run: |
-          mkdir %GITHUB_WORKSPACE%\dist
-          copy %TBUILD%\%REPO_NAME%\out\Release\Telegram.exe %GITHUB_WORKSPACE%\dist\AyuGram.exe
-          if exist %TBUILD%\%REPO_NAME%\out\Release\Updater.exe copy %TBUILD%\%REPO_NAME%\out\Release\Updater.exe %GITHUB_WORKSPACE%\dist\Updater.exe
+          mkdir "%GITHUB_WORKSPACE%\dist"
+          if exist "%TBUILD%\%REPO_NAME%\out\Release\Telegram.exe" (
+            copy /y "%TBUILD%\%REPO_NAME%\out\Release\Telegram.exe" "%GITHUB_WORKSPACE%\dist\AyuGram.exe"
+          )
+          if exist "%TBUILD%\%REPO_NAME%\out\Telegram.exe" (
+            copy /y "%TBUILD%\%REPO_NAME%\out\Telegram.exe" "%GITHUB_WORKSPACE%\dist\AyuGram.exe"
+          )
+          if exist "%TBUILD%\%REPO_NAME%\out\Release\Updater.exe" (
+            copy /y "%TBUILD%\%REPO_NAME%\out\Release\Updater.exe" "%GITHUB_WORKSPACE%\dist\Updater.exe"
+          )
+          if exist "%TBUILD%\%REPO_NAME%\out\Updater.exe" (
+            copy /y "%TBUILD%\%REPO_NAME%\out\Updater.exe" "%GITHUB_WORKSPACE%\dist\Updater.exe"
+          )
+          dir "%GITHUB_WORKSPACE%\dist"
 
       - name: Upload AyuGram Binary
         uses: actions/upload-artifact@v4
