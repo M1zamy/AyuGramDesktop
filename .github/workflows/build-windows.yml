@@ -1,0 +1,105 @@
+name: Build AyuGram Windows x64
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev*
+      - main*
+      - master
+    tags:
+      - 'v*'
+
+jobs:
+  windows:
+    name: Build Windows x64 Release
+    runs-on: windows-latest
+
+    env:
+      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Prepare build directories
+        run: |
+          mkdir %userprofile%\TBuild\Libraries
+          mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
+          echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
+          echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
+
+      - name: Get repository name
+        shell: bash
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
+
+      - name: Setup Visual Studio environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Setup CMake and Ninja
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.28.x'
+
+      - name: Cache ThirdParty
+        id: cache-third-party
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ runner.os }}-x64-third-party-${{ hashFiles('**/prepare.py') }}
+          restore-keys: |
+            ${{ runner.os }}-x64-third-party-
+
+      - name: Cache Libraries
+        id: cache-libs
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.LibrariesPath }}
+          key: ${{ runner.os }}-x64-libs-${{ hashFiles('**/prepare.py') }}
+          restore-keys: |
+            ${{ runner.os }}-x64-libs-
+
+      - name: Build Third-Party Dependencies
+        run: |
+          call %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat silent qt6
+
+      - name: Configure CMake
+        run: |
+          cd %TBUILD%\%REPO_NAME%\Telegram
+          call configure.bat x64 qt6 ^
+            -D TDESKTOP_API_ID=2040 ^
+            -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
+            -D CMAKE_CONFIGURATION_TYPES=Release ^
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
+            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
+
+      - name: Build AyuGram
+        run: |
+          cmake --build %TBUILD%\%REPO_NAME%\out --config Release --parallel
+
+      - name: Package Artifacts
+        run: |
+          mkdir %GITHUB_WORKSPACE%\dist
+          copy %TBUILD%\%REPO_NAME%\out\Release\Telegram.exe %GITHUB_WORKSPACE%\dist\AyuGram.exe
+          if exist %TBUILD%\%REPO_NAME%\out\Release\Updater.exe copy %TBUILD%\%REPO_NAME%\out\Release\Updater.exe %GITHUB_WORKSPACE%\dist\Updater.exe
+
+      - name: Upload AyuGram Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: AyuGram-v7.2.9-Windows-x64
+          path: dist\
+          retention-days: 14
