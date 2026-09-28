@@ -23,6 +23,31 @@ jobs:
         shell: cmd
 
     steps:
+      - name: Free up disk space on C drive
+        shell: pwsh
+        run: |
+          Write-Host "Free space before cleanup:"
+          Get-PSDrive C | Select-Object Used,Free
+          $pathsToRemove = @(
+            "C:\Android",
+            "C:\Program Files\Android",
+            "C:\vcpkg",
+            "C:\Selenium",
+            "C:\Program Files\Microsoft SDKs\Azure",
+            "C:\hostedtoolcache\windows\Ruby",
+            "C:\hostedtoolcache\windows\Go",
+            "C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk",
+            "C:\hostedtoolcache\windows\PyPy"
+          )
+          foreach ($p in $pathsToRemove) {
+            if (Test-Path $p) {
+              Write-Host "Removing $p..."
+              Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
+          Write-Host "Free space after cleanup:"
+          Get-PSDrive C | Select-Object Used,Free
+
       - name: Prepare build directories
         run: |
           mkdir %userprofile%\TBuild\Libraries
