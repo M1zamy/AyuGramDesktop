@@ -44,6 +44,16 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+          toolset: '14.44'
+
+      - name: Fix ATLMFC include path for Breakpad GYP
+        run: |
+          if exist "%VCToolsInstallDir%atlmfc" (
+            if not exist "%VCINSTALLDIR%atlmfc" mklink /j "%VCINSTALLDIR%atlmfc" "%VCToolsInstallDir%atlmfc"
+          )
+          if exist "%VCToolsInstallDir%ATLMFC" (
+            if not exist "%VCINSTALLDIR%atlmfc" mklink /j "%VCINSTALLDIR%atlmfc" "%VCToolsInstallDir%ATLMFC"
+          )
 
       - name: Setup Python
         uses: actions/setup-python@v5
