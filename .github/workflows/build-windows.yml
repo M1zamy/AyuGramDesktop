@@ -85,7 +85,7 @@ jobs:
 
       - name: Build Third-Party Dependencies
         run: |
-          call %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat silent qt6
+          call %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent qt6
 
       - name: Configure CMake
         run: |
