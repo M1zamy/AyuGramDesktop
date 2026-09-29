@@ -65,6 +65,15 @@ jobs:
           submodules: recursive
           path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
 
+      - name: Patch Qt CMake helpers for Dnsapi
+        shell: pwsh
+        run: |
+          $qtCMake = "${{ env.TBUILD }}\${{ env.REPO_NAME }}\cmake\external\qt\CMakeLists.txt"
+          if (Test-Path $qtCMake) {
+            Write-Host "Patching $qtCMake to include Dnsapi..."
+            (Get-Content $qtCMake) -replace 'Authz', "Authz`n            Dnsapi" | Set-Content $qtCMake
+          }
+
       - name: Setup Visual Studio environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
