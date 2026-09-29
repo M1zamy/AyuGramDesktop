@@ -139,13 +139,14 @@ jobs:
           call configure.bat -G "Ninja Multi-Config" qt6 ^
             -DTDESKTOP_API_ID=2040 ^
             -DTDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 ^
-            -DCMAKE_CONFIGURATION_TYPES=Release ^
+            -DCMAKE_CONFIGURATION_TYPES=Debug ^
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT= ^
             -DDESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
             -DDESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
 
       - name: Build AyuGram
         run: |
-          cmake --build %TBUILD%\%REPO_NAME%\out --config Release --parallel
+          cmake --build %TBUILD%\%REPO_NAME%\out --config Debug --parallel
 
       - name: Package Artifacts
         run: |
